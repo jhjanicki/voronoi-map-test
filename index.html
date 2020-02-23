@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>d3-voronoi-treemap test1</title>
+    <meta name="description" content="d3-voronoi-treemap plugin to remake 'The Costs of Being Fat, in Actual Dollars'">
+    <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+      <script src="https://rawcdn.githack.com/Kcnarf/d3-weighted-voronoi/v1.0.0/build/d3-weighted-voronoi.js"></script>
+      <script src="https://rawcdn.githack.com/Kcnarf/d3-voronoi-map/v1.2.0/build/d3-voronoi-map.js">
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,300i,400,700|Lora:400,400i,700" rel="stylesheet"></script>
+    <style>
+      body{
+        font-family: 'Lato';
+      }
+
+    </style>
+  </head>
+  <body>
+
+    <svg></svg>
+
+    <script>
+
+    //begin: constants
+      var _2PI = 2*Math.PI;
+      //end: constants
+
+      //begin: raw data global def
+      var totalWeight = 0;
+      //end: raw data global def
+
+      //begin: data-related utils
+      function weightAccessor(d){ return d.weight; };
+      function highlighterGroup(d){ return "group-"+d.id};
+      //end: data-related utils
+
+      //begin: layout conf.
+      var svgWidth = 960,
+          svgHeight = 500,
+          margin = {top: 10, right: 10, bottom: 10, left: 10},
+          height = svgHeight - margin.top - margin.bottom,
+          width = svgWidth - margin.left - margin.right,
+          halfWidth = width/2,
+          halfHeight = height/2,
+          quarterWidth = width/4,
+          quarterHeight = height/4,
+          legendsMinY = height - 20,
+          treemapCenter = [400, 200];
+      //end: layout conf.
+
+      //begin: treemap conf.
+      var baseRadius = 200;
+      var _voronoiMap = d3.voronoiMap();
+      var radius,circlingPolygon,polygons;
+      //end: treemap conf.
+
+      //begin: reusable d3Selection
+      var svg, drawingArea, container;
+      //end: reusable d3Selection
+
+      d3.csv("data.csv").then(function(data) {
+        data.forEach(function(d) {csvParser(d)});
+
+        initData(data);
+        initLayout();
+        // drawLegends(data);
+
+        polygons = _voronoiMap
+          .clip(circlingPolygon)
+          .weight(weightAccessor)
+        	.initialPosition(pieBasedPosition())
+        	(data.filter( function(d){ return weightAccessor(d)>0; }).reverse()).polygons;
+
+
+        drawTreemap();
+      });
+
+      function csvParser(d) {
+        d.id = +d.id;
+        d.weight = +d.weight;
+        d.color = d.color;
+        return d;
+      };
+
+      function initData(data) {
+        circlingPolygon = computeCirclingPolygon(baseRadius);
+        computeInitialPiePositioning(data);
+      }
+
+      function computeCirclingPolygon(radiusIn) {
+        var points = 60,
+            increment = _2PI/points,
+            circlingPolygon = [];
+
+        for (var a=0, i=0; i<points; i++, a+=increment) {
+          circlingPolygon.push(
+            [radiusIn*Math.cos(a), radiusIn*Math.sin(a)]
+          )
+        }
+
+      	return circlingPolygon;
+      };
+
+      function computeInitialPiePositioning(data) {
+        var initAngle = -3*Math.PI/4;
+            delta = _2PI/data.length,
+            halfRadius = radius/2;
+        var d, cos, sin;
+
+        for (var i=0; i<data.length; i++) {
+          d = data[i];
+          cos = Math.cos(initAngle + i*delta);
+          sin = Math.sin(initAngle + i*delta);
+
+          d.InitPlacement = [
+            // without random(), error "Cannot read property 'site' of undefined" is raised
+            // hyp: random() may remove colinearity of sites
+            (halfRadius+Math.random())*cos,
+            (halfRadius)*sin
+          ];
+
+        }
+      };
+
+      function pieBasedPosition() {
+          return function(d, i, arr, weightedVoronoi) { return d.InitPlacement; };
+      }
+
+      function initLayout() {
+        svg = d3.select("svg")
+          .attr("width", svgWidth)
+          .attr("height", svgHeight);
+
+        drawingArea = svg.append("g")
+        	.classed("drawingArea", true)
+        	.attr("transform", "translate("+[margin.left,margin.top]+")");
+
+        container = drawingArea.append("g")
+        	.classed("container", true)
+        	.attr("transform", "translate("+treemapCenter+")");
+
+
+      }
+
+
+      function drawTreemap() {
+        var  delta, totalRotation;
+
+          delta = radius;
+          totalRotation = -45;
+
+
+        var cells = container.append("g")
+        	.classed('cells', true)
+	        .selectAll(".cell")
+        	.data(polygons)
+        	.enter()
+        		.append("path")
+        			.classed("cell", true)
+        			.attr("d", function(d){ return "M"+d.join(",")+"z"; })
+        			.style("fill", function(d){
+            		return d.site.originalObject.data.originalData.color;
+          		});
+
+
+
+        var groups = container.append("g")
+        	.classed('groups', true)
+	        .selectAll(".group")
+        	.data(polygons)
+        	.enter()
+        		.append("text")
+        			.classed("group", true)
+              .style("font-size",10)
+        			.attr("transform", function(d){
+          			return "translate("+[d.site.x, d.site.y+6]+")"; // +6 for centering
+        			})
+        			.text(function(d){
+                return d.site.originalObject.data.originalData.group+ " "+d.site.originalObject.data.originalData.weight;
+              })
+      }
+
+
+    </script>
+  </body>
+</html>
+
+
+    </script>
+  </body>
+</html>

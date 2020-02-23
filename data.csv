@@ -1,0 +1,14 @@
+group,weight,id,color
+Insect,1053578,1,#a8ddb5
+Mammals,6495,2,#d4b9da
+Birds,11147,3,#df65b0
+Amphibians,8104,4,#ce1256
+Reptiles,11050,5,#e7298a
+Fishes,35315,6,#91003f
+Corals,2175,7,#7bccc4
+Molluscs,87975,8,#4eb3d3
+Crustaceans,80604,9,#2b8cbe
+Arachnids,110615,10,#0868ac
+Velvet worms,183,11,#084081
+Horseshoe crabs,4,12,#e0f3db
+Others,164209,13,#f7fcf0
